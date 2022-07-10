@@ -92,10 +92,10 @@ for i in range(len(model)):
 #click squares where there are no more mines
 for row in range(len(model)):
     for col in range(len(model[col])):
-        if (row, col) not in visited and model[row][col] == 0:
+        if model[row][col] == 0:
             for x in range(-1, 2):
                 for y in range(-1, 2):
-                    if row+x >= 0 and col+y >= 0 and row+x < len(model) and col+y < len(model[0]):
+                    if row+x >= 0 and col+y >= 0 and row+x < len(model) and col+y < len(model[0]) and (boxes[(row+x)*len(model[0])+col+y][0], boxes[(row+x)*len(model[0])+col+y][1]) not in visited:
                         pyautogui.click(boxes[(row+x)*len(model[0])+col+y][0], boxes[(row+x)*len(model[0])+col+y][1])
                         visited.add((boxes[(row+x)*len(model[0])+col+y][0], boxes[(row+x)*len(model[0])+col+y][1]))
                         
