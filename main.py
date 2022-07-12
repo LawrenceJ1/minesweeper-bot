@@ -28,7 +28,9 @@ class Program:
         self.mines = 0
         self.model = [[]]
         #adds 1 to the model value after the first pass, because each unchecked square is set to -1 rather than 0
-        self.after_first_pass = 0
+        self.first_pass_flag = 0
+        #if some action advanced the board, self.changes will equal 1
+        self.changes = 0
 
     def initializeBoard(self) -> None:
         """Gets the position of each of the boxes on the minesweeper board, as well as initializes the model and the number of mines"""
@@ -70,16 +72,16 @@ class Program:
             for i in range(10):
                 if i == 0:
                     if pyautogui.pixel(int(box[0]-3-self.box_width/2), int(box[1])) == self.colors[i]:
-                        if self.after_first_pass:
+                        if self.first_pass_flag:
                             break
                         self.model[row][col] = -1
                         break
                 elif i == 9:
-                    self.model[row][col] += i+self.after_first_pass
+                    self.model[row][col] += i+self.first_pass_flag
                     self.visited.add((box[0], box[1]))
                     break
                 elif (abs(pix[0]-self.colors[i][0]) <= tolerance) and (abs(pix[1]-self.colors[i][1]) <= tolerance) and (abs(pix[2]-self.colors[i][2]) <= tolerance):
-                    self.model[row][col] += i+self.after_first_pass
+                    self.model[row][col] += i+self.first_pass_flag
                     self.visited.add((box[0], box[1]))
                     break
             col += 1
@@ -109,6 +111,7 @@ class Program:
                                 for y in range(-1, 2):
                                     if square[0]+x >= 0 and square[1]+y >= 0 and square[0]+x < len(self.model) and square[1]+y < len(self.model[0]) and self.model[square[0]+x][square[1]+y] != 9 and self.model[square[0]+x][square[1]+y] != 10:
                                         self.model[square[0]+x][square[1]+y] -= 1
+                                        self.changes = 1
     
     def clickEmptySquares(self) -> None:           
         """Click squares where there are no more mines."""
@@ -119,13 +122,13 @@ class Program:
                         for y in range(-1, 2):
                             if row+x >= 0 and col+y >= 0 and row+x < len(self.model) and col+y < len(self.model[0]) and (self.boxes[(row+x)*len(self.model[0])+col+y][0], self.boxes[(row+x)*len(self.model[0])+col+y][1]) not in self.visited:
                                 pyautogui.click(self.boxes[(row+x)*len(self.model[0])+col+y][0], self.boxes[(row+x)*len(self.model[0])+col+y][1])
+                                self.changes = 1
 
     def run(self) -> None:
         """Runs the main program."""
         self.initializeBoard()
         self.startGame()
         while self.mines > 0:
-            prev_model = self.model
             self.getModel()
             for i in range(len(self.model)):
                 print(self.model[i])
@@ -133,12 +136,13 @@ class Program:
             sleep(10)
             self.placeObviousFlags()
             self.clickEmptySquares()
-            self.after_first_pass = 1
+            self.first_pass_flag = 1
             
             #if we couldn't advance the board then we need to break the loop and use dfs
-            if prev_model == self.model:
+            if not self.changes:
                 break
-            
+        
+        
 if __name__ == "__main__":
     ai = Program()
     ai.run()
