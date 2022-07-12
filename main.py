@@ -1,3 +1,4 @@
+from pyexpat import model
 from time import sleep
 import pyautogui
 
@@ -35,7 +36,7 @@ class Program:
             _, _, self.box_width, self.box_height = i
             z = pyautogui.center(i)
             x, y = z
-            self.boxes.append([x+3, int(y-0.27*self.box_height)])
+            self.boxes.append([x+3, int(y-0.27*self.box_height)]) #IMPORTANT: FINE TUNE PARAMETERS TO GET PROPER MODEL
 
         #determining the difficulty
         if len(self.boxes) == 81:
@@ -69,6 +70,8 @@ class Program:
             for i in range(10):
                 if i == 0:
                     if pyautogui.pixel(int(box[0]-3-self.box_width/2), int(box[1])) == self.colors[i]:
+                        if self.after_first_pass:
+                            break
                         self.model[row][col] = -1
                         break
                 elif i == 9:
@@ -122,18 +125,18 @@ class Program:
         self.initializeBoard()
         self.startGame()
         while self.mines > 0:
-            cur_mines = self.mines
+            prev_model = self.model
             self.getModel()
-            # for i in range(len(self.model)):
-            #     print(self.model[i])
-            # print()
-            # sleep(20)
+            for i in range(len(self.model)):
+                print(self.model[i])
+            print()
+            sleep(10)
             self.placeObviousFlags()
             self.clickEmptySquares()
             self.after_first_pass = 1
             
-            #if we couldn't advance the board/determine where any of the mines where then we need to break the loop and use dfs
-            if self.mines == cur_mines:
+            #if we couldn't advance the board then we need to break the loop and use dfs
+            if prev_model == self.model:
                 break
             
 if __name__ == "__main__":
