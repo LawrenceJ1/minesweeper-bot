@@ -26,6 +26,8 @@ class Program:
         self.box_height = 0
         self.mines = 0
         self.model = [[]]
+        #adds 1 to the model value after the first pass, because each unchecked square is set to -1 rather than 0
+        self.after_first_pass = 0
 
     def initializeBoard(self) -> None:
         """Gets the position of each of the boxes on the minesweeper board, as well as initializes the model and the number of mines"""
@@ -70,11 +72,11 @@ class Program:
                         self.model[row][col] = -1
                         break
                 elif i == 9:
-                    self.model[row][col] = i
+                    self.model[row][col] += i+self.after_first_pass
                     self.visited.add((box[0], box[1]))
                     break
                 elif (abs(pix[0]-self.colors[i][0]) <= tolerance) and (abs(pix[1]-self.colors[i][1]) <= tolerance) and (abs(pix[2]-self.colors[i][2]) <= tolerance):
-                    self.model[row][col] = i
+                    self.model[row][col] += i+self.after_first_pass
                     self.visited.add((box[0], box[1]))
                     break
             col += 1
@@ -86,12 +88,12 @@ class Program:
         """Places a flag where there is only one possible location that a mine could be in."""
         for i in range(len(self.model)):
             for j in range(len(self.model[i])):
-                if self.model[i][j] != -1 and self.model[i][j] != 9 and self.model[i][j] != 10:
+                if self.model[i][j] > 0 and self.model[i][j] != 9 and self.model[i][j] != 10:
                     sqaures_around = 0
                     squares = []
                     for x in range(-1, 2):
                         for y in range(-1, 2):
-                            if i+x >= 0 and j+y >= 0 and i+x < len(self.model) and j+y < len(self.model[0]) and self.model[i+x][j+y] == -1:
+                            if i+x >= 0 and j+y >= 0 and i+x < len(self.model) and j+y < len(self.model[0]) and self.model[i+x][j+y] < 0:
                                 sqaures_around += 1
                                 squares.append([i+x, j+y])
                     if sqaures_around == self.model[i][j]:
@@ -102,7 +104,7 @@ class Program:
                             self.visited.add((self.boxes[square[0]*len(self.model[0])+square[1]][0], self.boxes[square[0]*len(self.model[0])+square[1]][1]))
                             for x in range(-1, 2):
                                 for y in range(-1, 2):
-                                    if square[0]+x >= 0 and square[1]+y >= 0 and square[0]+x < len(self.model) and square[1]+y < len(self.model[0]) and self.model[square[0]+x][square[1]+y] != -1 and self.model[square[0]+x][square[1]+y] != 9 and self.model[square[0]+x][square[1]+y] != 10:
+                                    if square[0]+x >= 0 and square[1]+y >= 0 and square[0]+x < len(self.model) and square[1]+y < len(self.model[0]) and self.model[square[0]+x][square[1]+y] != 9 and self.model[square[0]+x][square[1]+y] != 10:
                                         self.model[square[0]+x][square[1]+y] -= 1
     
     def clickEmptySquares(self) -> None:           
@@ -114,7 +116,6 @@ class Program:
                         for y in range(-1, 2):
                             if row+x >= 0 and col+y >= 0 and row+x < len(self.model) and col+y < len(self.model[0]) and (self.boxes[(row+x)*len(self.model[0])+col+y][0], self.boxes[(row+x)*len(self.model[0])+col+y][1]) not in self.visited:
                                 pyautogui.click(self.boxes[(row+x)*len(self.model[0])+col+y][0], self.boxes[(row+x)*len(self.model[0])+col+y][1])
-                                # self.visited.add((self.boxes[(row+x)*len(self.model[0])+col+y][0], self.boxes[(row+x)*len(self.model[0])+col+y][1]))
 
     def run(self) -> None:
         """Runs the main program."""
@@ -123,9 +124,13 @@ class Program:
         while self.mines > 0:
             cur_mines = self.mines
             self.getModel()
-            print(self.model)
+            # for i in range(len(self.model)):
+            #     print(self.model[i])
+            # print()
+            # sleep(20)
             self.placeObviousFlags()
             self.clickEmptySquares()
+            self.after_first_pass = 1
             
             #if we couldn't advance the board/determine where any of the mines where then we need to break the loop and use dfs
             if self.mines == cur_mines:
