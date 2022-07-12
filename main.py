@@ -124,16 +124,21 @@ class Program:
                                 pyautogui.click(self.boxes[(row+x)*len(self.model[0])+col+y][0], self.boxes[(row+x)*len(self.model[0])+col+y][1])
                                 self.changes = 1
 
+    def clickAllSquares(self) -> None:
+        """Once there are no mines left, run this function. This will click the remaining squares."""
+        for box in self.boxes:
+            if (box[0], box[1]) in self.visited:
+                continue
+            else:
+                pyautogui.click(x=box[0], y=box[1])
+
     def run(self) -> None:
         """Runs the main program."""
         self.initializeBoard()
         self.startGame()
         while self.mines > 0:
+            self.changes = 0
             self.getModel()
-            for i in range(len(self.model)):
-                print(self.model[i])
-            print()
-            sleep(10)
             self.placeObviousFlags()
             self.clickEmptySquares()
             self.first_pass_flag = 1
@@ -141,7 +146,7 @@ class Program:
             #if we couldn't advance the board then we need to break the loop and use dfs
             if not self.changes:
                 break
-        
+        self.clickAllSquares()
         
 if __name__ == "__main__":
     ai = Program()
