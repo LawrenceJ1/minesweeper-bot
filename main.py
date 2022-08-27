@@ -38,7 +38,8 @@ class Program:
             _, _, self.box_width, self.box_height = i
             z = pyautogui.center(i)
             x, y = z
-            self.boxes.append([x+3, int(y-0.27*self.box_height)]) #IMPORTANT: FINE TUNE PARAMETERS TO GET PROPER MODEL
+            self.boxes.append([x+3, int(y-0.27*self.box_height)]) 
+            #IMPORTANT: FINE TUNE PARAMETERS TO GET PROPER MODEL, BECAUSE 4 is currently thought to be 8 for some reason
 
         #determining the difficulty
         if len(self.boxes) == 81:
@@ -145,7 +146,8 @@ class Program:
             
             #if we couldn't advance the board then we need to break the loop and use dfs
             if not self.changes:
-                break
+                break #implement dfs code
+            
         self.clickAllSquares()
         
 if __name__ == "__main__":
