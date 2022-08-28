@@ -3,7 +3,7 @@ import pyautogui
 
 #CURRENTLY ONLY WORKS FOR 200% ZOOM ON 1080x1920 MONITOR
 
-# UNCHECKED = (255, 255, 255), top left will be checked for this
+# UNCHECKED = (255, 255, 255)
 # ONE = (0, 0, 255)
 # TWO = (0, 123, 0)
 # THREE = (255, 0, 0)
@@ -19,7 +19,7 @@ import pyautogui
 class Program:
     def __init__(self) -> None:
         # RGB Values for every number
-        self.colors = [(255, 255, 255), (0, 0, 255), (0, 123, 0), (255, 0, 0), (0, 0, 123), (0, 123, 123), (0, 0, 0), (123, 123, 123), (300, 300, 300)]
+        self.colors = [(255, 255, 255), (0, 0, 255), (0, 123, 0), (255, 0, 0), (0, 0, 123), (123, 0, 0), (0, 123, 123), (0, 0, 0), (123, 123, 123), (300, 300, 300)]
         self.boxes = []
         self.visited = set()
         self.box_width = 0
@@ -34,12 +34,12 @@ class Program:
     def initializeBoard(self) -> None:
         """Gets the position of each of the boxes on the minesweeper board, as well as initializes the model and the number of mines"""
         for i in pyautogui.locateAllOnScreen("square.png", confidence=0.98):
-            # _, _, self.box_width, self.box_height = i
+            _, _, self.box_width, self.box_height = i
             z = pyautogui.center(i)
             x, y = z
             # self.boxes.append([x+3, int(y-0.27*self.box_height)]) 
             self.boxes.append([x+3, y]) 
-            #IMPORTANT: FINE TUNE PARAMETERS TO GET PROPER MODEL, BECAUSE 4 is currently thought to be 8 for some reason
+            #IMPORTANT: FINE TUNE PARAMETERS TO GET PROPER MODEL
 
         #determining the difficulty
         if len(self.boxes) == 81:
