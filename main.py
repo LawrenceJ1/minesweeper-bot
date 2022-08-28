@@ -1,4 +1,3 @@
-from pyexpat import model
 from time import sleep
 import pyautogui
 
@@ -35,10 +34,11 @@ class Program:
     def initializeBoard(self) -> None:
         """Gets the position of each of the boxes on the minesweeper board, as well as initializes the model and the number of mines"""
         for i in pyautogui.locateAllOnScreen("square.png", confidence=0.98):
-            _, _, self.box_width, self.box_height = i
+            # _, _, self.box_width, self.box_height = i
             z = pyautogui.center(i)
             x, y = z
-            self.boxes.append([x+3, int(y-0.27*self.box_height)]) 
+            # self.boxes.append([x+3, int(y-0.27*self.box_height)]) 
+            self.boxes.append([x+3, y]) 
             #IMPORTANT: FINE TUNE PARAMETERS TO GET PROPER MODEL, BECAUSE 4 is currently thought to be 8 for some reason
 
         #determining the difficulty
@@ -53,14 +53,14 @@ class Program:
             self.mines = 99
 
     def startGame(self) -> None:
-        """the game will start with a click on the top left box"""
+        """The game will start with a click on the top left box"""
         pyautogui.click(x=self.boxes[0][0], y=self.boxes[0][1])
 
 
     def getModel(self) -> None:
         """Updates the model for the board"""
         row, col = 0, 0
-        m, n = len(self.model), len(self.model[0]) #REMINDER: use these variables instead of len()
+        m, n = len(self.model), len(self.model[0])
         tolerance = 5
         for box in self.boxes:
             if (box[0], box[1]) in self.visited:
@@ -91,17 +91,22 @@ class Program:
                 col = 0
 
     def placeObviousFlags(self) -> None:
-        """Places a flag where there is only one possible location that a mine could be in."""
+        """Places a flag where there is only one possible location that a mine could be in"""
         for i in range(len(self.model)):
             for j in range(len(self.model[i])):
+                # Only continue if the square is numbered
                 if self.model[i][j] > 0 and self.model[i][j] != 9 and self.model[i][j] != 10:
                     sqaures_around = 0
                     squares = []
+                    
+                    # Gets the number of unknown squares around a numbered square
                     for x in range(-1, 2):
                         for y in range(-1, 2):
                             if i+x >= 0 and j+y >= 0 and i+x < len(self.model) and j+y < len(self.model[0]) and self.model[i+x][j+y] < 0:
                                 sqaures_around += 1
                                 squares.append([i+x, j+y])
+                                
+                    # If the number of unknown squares is equal to the number on the square, then they all must be mines, so flags are placed at each square
                     if sqaures_around == self.model[i][j]:
                         for square in squares:
                             self.model[square[0]][square[1]] = 10
@@ -115,7 +120,7 @@ class Program:
                                         self.changes = 1
     
     def clickEmptySquares(self) -> None:           
-        """Click squares where there are no more mines."""
+        """Click squares where there are no more mines"""
         for row in range(len(self.model)):
             for col in range(len(self.model[row])):
                 if self.model[row][col] == 0:
@@ -125,8 +130,44 @@ class Program:
                                 pyautogui.click(self.boxes[(row+x)*len(self.model[0])+col+y][0], self.boxes[(row+x)*len(self.model[0])+col+y][1])
                                 self.changes = 1
 
+    def dfs(self, model) -> None:
+        """CURRENTLY A WORK IN PROGRESS. Tries to determine the location of mines through backtracking"""
+        for row in range(len(model)):
+            for col in range(len(model[row])):
+                if self._isValid(model, row, col):
+                    
+                    # If the square is valid, then we need to pretend it's a mine and update the surrounding squares
+                    model[row][col] = 10
+                    for x in range(-1, 2):
+                        for y in range(-1, 2):
+                            if row+x >= 0 and col+y >= 0 and row+x < len(model) and col+y < len(model[0]) and model[row+x][col+y] != 9 and model[row+x][col+y] != 10 and model[row+x][col+y] != -1:
+                                model[row+x][col+y] -= 1
+                    
+                    # If this leads to an inconsistency, then the square must actually not be a mine. An inconsistency is when a square still has a mine surrounding it, but there are no more squares that could be mines around it
+                    #DELETE AFTER DONE
+                    for i in range(len(model)):
+                        print(model[i])
+                    sleep(50000)
+                                
+                    # self.dfs(model)
+                    
+                    # # Resets the board to the previous state
+                    # for x in range(-1, 2):
+                    #     for y in range(-1, 2):
+                    #         if row+x >= 0 and col+y >= 0 and row+x < len(model) and col+y < len(model[0]) and model[row+x][col+y] != 9 and model[row+x][col+y] != 10 and model[row+x][col+y] != -1:
+                    #             model[row+x][col+y] += 1
+                
+    def _isValid(self, model, row, col) -> bool:
+        """Returns true or false, depending on whether the position has any surrounding squares that aren't unknown"""
+        if model[row][col] == -1:
+            for x in range(-1, 2):
+                for y in range(-1, 2):
+                    if row+x >= 0 and col+y >= 0 and row+x < len(model) and col+y < len(model[0]) and model[row+x][col+y] > 0 and model[row+x][col+y] < 9:
+                        return True
+        return False
+
     def clickAllSquares(self) -> None:
-        """Once there are no mines left, run this function. This will click the remaining squares."""
+        """Once there are no mines left, run this function. This will click the remaining squares"""
         for box in self.boxes:
             if (box[0], box[1]) in self.visited:
                 continue
@@ -134,7 +175,7 @@ class Program:
                 pyautogui.click(x=box[0], y=box[1])
 
     def run(self) -> None:
-        """Runs the main program."""
+        """Runs the main program"""
         self.initializeBoard()
         self.startGame()
         while self.mines > 0:
@@ -146,7 +187,7 @@ class Program:
             
             #if we couldn't advance the board then we need to break the loop and use dfs
             if not self.changes:
-                break #implement dfs code
+                self.dfs(self.model)
             
         self.clickAllSquares()
         
